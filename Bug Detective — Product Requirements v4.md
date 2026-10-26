@@ -6,7 +6,7 @@ Oct 25, 2026 · @Pedro Henrique Leão Braga
 
 Bug Detective is an offline-first simulation of working as a software developer: players join a fictional consulting company, receive realistic tickets, debug a running app in their own VS Code and browser, and go through QA and a simulated code review. The audience is people who already program and need practice debugging and maintaining real projects. No AI judges or explains player solutions.
 
-**Current milestone:** Stage C on **Windows**: the Electron desktop app around the finished SupportDesk stages and QA suite. macOS and Linux come after the Windows version works end to end.
+**Current milestone:** Stage C on **Windows**: the Electron desktop app around the finished SupportDesk stages and QA suite. macOS and Linux come after the Windows version works end to end. The app also runs in development mode directly inside WSL 2 (Linux), through the same platform module; Linux packaging is still part of Stage D.
 
 **What changed from v3**
 
@@ -129,6 +129,8 @@ A failed gate or a timeout always returns the card to In Progress with a QA comm
 
 **Senior-dev hints:** from a card in progress, the player sends a message to the senior developer, who replies with prewritten hints (PT/EN), one at a time. Only after all hints are used can the final solution be revealed. Even then, the player must apply it and pass QA. History records how many hints were used and whether the solution was revealed.
 
+**Starting a ticket** (To Do → In Progress, which happens only once per ticket) resets the workspace to the clean stage: uncommitted changes, untracked files and extra commits on `player/ticket-N` are discarded, and the database is reseeded. Coming back from QA never resets anything, so the player continues where they stopped. Starting a ticket needs Docker running.
+
 **Done tickets** are read-only in the app: the player can view the review, QA comments and history, but the app never switches back to an old ticket's branch.
 
 No scores, rankings, visible timers or AI assessment in the MVP.
@@ -160,6 +162,7 @@ Each unlocked stage is downloaded as a snapshot and imported as a new commit in 
 - **One working directory**, inside the Docker volume. The next ticket starts from the curated stage, not from the player's implementation; the player's earlier branches are kept locally and never pushed.
 - **Player Git is free:** the player may commit and create branches in VS Code. QA evaluates the current state of the workspace files, not a specific branch. If HEAD is not on the ticket's branch, the app warns the player.
 - **No switching back:** since Done tickets are read-only, the app never checks out an older ticket's branch.
+- **One game per workspace:** the Docker volume outlives the saved game, so the repository records which game it belongs to. When a different game (or **Settings → New game**) unlocks a stage, the previous game's `player/*` branches are renamed to `archive/<time>/…` and its uncommitted work is stashed, so a new game never inherits old code.
 - **Anti-cheat limitation:** the public repository and Release assets can be discovered by a motivated player; this is accepted for the MVP.
 - Failed or partial downloads must be retried safely without touching existing player branches.
 
@@ -176,11 +179,11 @@ Each unlocked stage is downloaded as a snapshot and imported as a new commit in 
 
 **Open items (Stage C, not blocking)**
 
-- [ ] Where game state (Kanban, history, hints used) is stored and how it survives app updates
-- [ ] "Export progress" format and restore flow (player branches, history)
+- [x] Where game state is stored: one versioned `state.json` in the app data folder, written atomically, with schema migrations on load
+- [x] "Export progress" format: a `.bdsave` zip (manifest with checksums, game state, `git bundle` of the workspace, stage packages); restore validates everything, warns before overwriting, then recreates the volume
 - [ ] Windows code signing and auto-update (macOS notarization moves to Stage D)
 - [ ] Docker Desktop license terms if companies adopt the game for training
-- [ ] QA timeout value (3 minutes is a placeholder)
+- [x] QA timeout value: 3 minutes by default, configurable in Settings (30 s to 30 min); a timeout counts as a failed attempt
 
 **Next actions**
 

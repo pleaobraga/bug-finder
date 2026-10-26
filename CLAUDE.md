@@ -6,6 +6,14 @@
 - Code, comments and commit messages are in English. Pedro often writes in Portuguese; reply in the language he uses.
 - Before implementing a behavior change, propose the design and get approval first.
 
+## Keep the docs in sync
+
+After every prompt, before finishing:
+
+- Update `Bug Detective — Product Requirements v4.md` when the work changes product decisions, scope, the game workflow, platforms or open items (for example, mark resolved open items and record new decisions).
+- Update every README the work affects (`desktop/README.md`, `supportdesk/README.md`, `supportdesk/qa/README.md`, and any new one) so commands, behavior and configuration match the code.
+- Mention in the final message which docs were updated, or that none needed changes.
+
 ## Commit message at the end of every task
 
 When you finish a task, end your final message with one suggested commit message: a single line, in a fenced block, following the Conventional Commits rules enforced by `@commitlint/config-conventional`:
