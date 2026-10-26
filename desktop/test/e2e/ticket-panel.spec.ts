@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { launch, startFirstTicket } from './fixtures.ts';
+import { dragCard, launch, startFirstTicket } from './fixtures.ts';
 
 test('the ticket panel shows the ticket, QA comments, history and the senior-dev conversation', async () => {
   const { page, close } = await launch({ qa: ['gate2'] });
@@ -20,7 +20,7 @@ test('the ticket panel shows the ticket, QA comments, history and the senior-dev
     await expect(panel.getByTestId('conversation')).toContainText('Move the card to In Progress');
     await expect(panel.getByTestId('ask-hint')).toHaveCount(0);
     await panel.getByTestId('close-panel').click();
-    await page.getByTestId('card-1').dragTo(page.getByTestId('column-inProgress'));
+    await dragCard(page, 1, 'inProgress');
     await page.getByTestId('card-1').click();
     await panel.getByTestId('tab-senior').click();
 
@@ -38,8 +38,10 @@ test('the ticket panel shows the ticket, QA comments, history and the senior-dev
 
     // QA failure: comment names the gate, lists failing tests with errors.
     await panel.getByTestId('close-panel').click();
-    await page.getByTestId('card-1').dragTo(page.getByTestId('column-inQa'));
-    await expect(page.getByTestId('card-1')).toHaveAttribute('data-status', 'inProgress', { timeout: 15_000 });
+    await dragCard(page, 1, 'inQa');
+    // Wait for the attempt itself: the card can still be in In Progress before the move lands.
+    await expect(page.getByTestId('card-1')).toContainText('1 QA attempt', { timeout: 15_000 });
+    await expect(page.getByTestId('card-1')).toHaveAttribute('data-status', 'inProgress');
     await page.getByTestId('card-1').click();
     await panel.getByTestId('tab-qa').click();
     const comment = panel.getByTestId('qa-comment').first();

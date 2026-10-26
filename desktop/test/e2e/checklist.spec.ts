@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { launch } from './fixtures.ts';
+import { dragCard, launch } from './fixtures.ts';
 
 test('the first-run checklist blocks the game until every prerequisite passes', async () => {
   const { page, close } = await launch({ docker: 'notRunning', devcontainers: false });
@@ -58,9 +58,13 @@ test('the app shows a banner and pauses Docker actions when Docker stops mid-ses
     await page.getByTestId('close-panel').click();
 
     // Starting work is local; submitting to QA needs Docker and is refused.
-    await page.getByTestId('card-1').dragTo(page.getByTestId('column-inProgress'));
+    await dragCard(page, 1, 'inProgress');
     await expect(page.getByTestId('card-1')).toHaveAttribute('data-status', 'inProgress');
-    await page.getByTestId('card-1').dragTo(page.getByTestId('column-inQa'));
+    // Refused by the main process: retry only if the drop itself was lost (no toast at all).
+    for (let attempt = 1; attempt <= 3 && !(await page.getByTestId('toast-error').count()); attempt += 1) {
+      await page.getByTestId('card-1').dragTo(page.getByTestId('column-inQa'));
+      await page.getByTestId('toast-error').waitFor({ timeout: 5000 }).catch(() => console.warn(`drop to In QA not registered (attempt ${attempt})`));
+    }
     await expect(page.getByTestId('toast-error')).toContainText('Docker is not running');
     await expect(page.getByTestId('card-1')).toHaveAttribute('data-status', 'inProgress');
 

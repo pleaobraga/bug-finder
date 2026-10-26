@@ -16,7 +16,7 @@ import { _electron as electron, expect, test } from '@playwright/test';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const supportdesk = resolve(root, '..', 'supportdesk');
-const DOCKER = 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe';
+const DOCKER = process.platform === 'win32' ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : 'docker';
 const CONTAINER = 'bugdetective-workspace';
 const log = (message: string) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${message}`);
 

@@ -178,7 +178,7 @@ export class DockerRuntime implements GameRuntime {
     ] as const) {
       if (!(await docker.imageExists(tag))) {
         onLine(`» docker build ${tag}`);
-        await docker.build(join(this.contextRoot, name), tag, `${name}-image`, (line) => onLine(line));
+        await docker.build(this.platform.dockerHostPath(join(this.contextRoot, name)), tag, `${name}-image`, (line) => onLine(line));
       }
     }
     const workspace = await this.runningWorkspace();

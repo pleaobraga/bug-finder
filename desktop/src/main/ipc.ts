@@ -74,7 +74,10 @@ function toEnvelopeError(error: unknown): Envelope<never> {
   return { ok: false, error: { code: 'failed', message: error instanceof Error ? error.message : String(error) } };
 }
 
-export function registerIpc(game: Game, rendererOrigin: string | null): void {
+/** Opens an allowlisted URL; the platform may provide its own command (WSL opens the Windows browser). */
+export type UrlOpener = (url: string) => Promise<void>;
+
+export function registerIpc(game: Game, rendererOrigin: string | null, openUrl: UrlOpener = (url) => shell.openExternal(url)): void {
   const handlers: { [K in Channel]: (...args: z.infer<(typeof schemas)[K]>) => Promise<unknown> | unknown } = {
     snapshot: () => game.snapshot(),
     checkPrerequisites: () => game.checkPrerequisites(),
@@ -97,10 +100,10 @@ export function registerIpc(game: Game, rendererOrigin: string | null): void {
       if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1') {
         throw new GameError('notAllowed');
       }
-      await shell.openExternal(url.href);
+      await openUrl(url.href);
     },
     startDevServer: () => game.startDevServer(),
-    openExternal: (link) => shell.openExternal(EXTERNAL_LINKS[link]),
+    openExternal: (link) => openUrl(EXTERNAL_LINKS[link]),
     updateSettings: (settings) => game.updateSettings(settings),
     exportProgress: async () => {
       const window = BrowserWindow.getFocusedWindow();

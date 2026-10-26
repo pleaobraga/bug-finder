@@ -1,6 +1,6 @@
 # Bug Detective (desktop)
 
-An offline-first desktop game where developers practice debugging. The player joins Lanternfish Labs, gets SupportDesk tickets on a Kanban board, fixes them in their own VS Code (attached to a Docker container), and goes through QA and a code review. Windows only for now.
+An offline-first desktop game where developers practice debugging. The player joins Lanternfish Labs, gets SupportDesk tickets on a Kanban board, fixes them in their own VS Code (attached to a Docker container), and goes through QA and a code review. Runs on Windows (installer) and on Linux, including directly inside WSL 2 (development mode; no Linux package yet).
 
 - Electron 45 (Node.js 24.22 inside Electron) + React 19 + TypeScript 7 + Vite 8 via electron-vite 6
 - Tailwind CSS 4 (`@tailwindcss/vite`, tokens in `src/renderer/src/styles.css` with `@theme`), Inter and JetBrains Mono bundled locally
@@ -18,7 +18,7 @@ src/main/              Electron main process
   runtime.ts           GameRuntime interface and DockerRuntime
   fake-runtime.ts      in-memory runtime for the e2e tests (development builds only)
   services/            prerequisites, docker, workspace, content/, qa, vscode, state, backup, process
-  platform/            OS-specific code: types.ts (interface), windows.ts
+  platform/            OS-specific code: types.ts (interface), windows.ts, linux.ts (Linux and WSL 2)
 src/preload/           the typed window.bugDetective bridge
 src/renderer/          React UI (Tailwind)
 src/shared/            types, the Kanban state machine, QA message selection
@@ -49,9 +49,39 @@ npm run dev                # prepares build/docker and build/stage-packages, the
 - `tools/prepare-resources.ts`: copies `docker/` and the QA CLI (`../supportdesk/qa` without `stages/`) into `build/docker/` and writes content-addressed image tags to `build/docker/images.json`;
 - `tools/build-stage-packages.ts`: builds `build/stage-packages/` (one zip per stage + `manifest.json`), which the local content source verifies against.
 
-## Development from WSL 2
+## Running directly in WSL 2 (Linux)
 
-The app is a Windows app, so Electron, the e2e tests and the installer run with Windows Node.js on a Windows copy of the code. `node_modules` is never shared between the two sides.
+The app also runs as a Linux app inside WSL 2, shown on the Windows desktop through WSLg. Requirements:
+
+- Windows 11 (or Windows 10 with WSLg) and Node.js 26.12.1 in the distro (`nvm use`).
+- Docker Desktop with **WSL integration enabled for this distro** (Settings → Resources → WSL integration), so `docker` works inside WSL. Docker Engine installed in the distro also works.
+- Electron's system libraries, once: `sudo apt-get install -y libgtk-3-0 libasound2 libnss3 libgbm1 libxss1`.
+- VS Code on Windows with the Dev Containers extension (the app installs it).
+
+```sh
+cd desktop
+nvm use                    # 26.12.1
+npm ci
+npm run electron:install   # downloads the Linux Electron binary
+npm run dev
+```
+
+How the Linux platform module (`src/main/platform/linux.ts`) behaves inside WSL:
+
+- Docker: the `docker` CLI from the WSL integration, with Linux paths (game data in `~/.config/Bug Detective`). The Windows `docker` shim on the PATH is ignored. While Docker Desktop is stopped, the CLI disappears from WSL; "Start Docker Desktop" starts the Windows app through interop.
+- VS Code: the Windows `Code.exe` with its CLI entry point, through interop (`ELECTRON_RUN_AS_NODE` is passed with `WSLENV`). It attaches to the same container, because WSL and Windows share Docker Desktop's engine. The VS Code Server remote CLI (`~/.vscode-server/.../remote-cli/code`) is never used.
+- "Open app in browser" and help links open the Windows default browser (`explorer.exe <url>`). Published ports answer both in WSL and on Windows.
+- The WSL 2 check is read from the kernel (`/proc/version`).
+
+On plain Linux (not WSL), the same module uses Docker Engine, VS Code for Linux (`code`) and the default browser; the WSL check is skipped. That path is unit-tested only.
+
+Do not start the app from a process that sets `ELECTRON_RUN_AS_NODE=1` (some editor extension hosts do): Electron would run as plain Node and fail to load `electron`. Normal terminals, including VS Code's integrated terminal, are fine.
+
+Linux and Windows share the same Docker images (the tags are content hashes) and the same Docker volumes, so a game started on one side continues on the other only if the data folder is shared too; by default each side has its own state (`%APPDATA%` vs `~/.config`).
+
+## Windows development from WSL 2
+
+To run the Windows app (and build the installer) from a WSL terminal, Electron, the e2e tests and electron-builder run with Windows Node.js on a Windows copy of the code. `node_modules` is never shared between the two sides.
 
 ```sh
 # Linux side: unit tests (and SupportDesk/QA work)
@@ -77,9 +107,9 @@ Docker is shared: `docker.exe` on Windows and the WSL integration talk to the sa
 | Command | Where | What |
 | --- | --- | --- |
 | `npm test` | WSL or Windows | Vitest unit tests: Kanban rules, state and migrations, QA result parsing and messages, checksums, content sources (local git repo and a mock GitHub server), backup manifests, Windows detection, the game controller |
-| `npm run test:integration` | Windows + Docker Desktop | Real Docker: unlock stage 1, QA on the buggy stage (Gate 2 fails), infinite-loop timeout, `reference.patch` applied in the workspace container (both gates pass), next stage, export/delete/restore, interrupted QA. Uses the `bugdetective-test-*` resources only. Run `npm run build` first. |
-| `npm run test:e2e` | Windows | Playwright for Electron with the fake runtime: first-run checklist, Docker banner, Kanban drag rules, ticket panel, language, restart |
-| `npx playwright test --config playwright.manual.config.ts` | Windows + Docker Desktop + VS Code | The full game loop through the real UI (all four tickets, VS Code attach, restart during QA, export/restore). Opens VS Code windows. |
+| `npm run test:integration` | Windows or Linux/WSL 2 + Docker | Real Docker: unlock stage 1, QA on the buggy stage (Gate 2 fails), infinite-loop timeout, `reference.patch` applied in the workspace container (both gates pass), next stage, export/delete/restore, interrupted QA. Uses the `bugdetective-test-*` resources only. Run `npm run build` first. |
+| `npm run test:e2e` | Windows or Linux/WSL 2 (WSLg) | Playwright for Electron with the fake runtime: first-run checklist, Docker banner, Kanban drag rules, ticket panel, language, restart |
+| `npx playwright test --config playwright.manual.config.ts` | Windows or Linux/WSL 2, + Docker + VS Code | The full game loop through the real UI (all four tickets, VS Code attach, restart during QA, export/restore). Opens VS Code windows. |
 
 ## Installer
 

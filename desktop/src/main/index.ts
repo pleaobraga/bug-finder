@@ -1,13 +1,15 @@
 /** Electron main process: window, security settings, services and IPC. */
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { app, BrowserWindow, session } from 'electron';
+import { spawn } from 'node:child_process';
+import { app, BrowserWindow, session, shell } from 'electron';
 import { z } from 'zod';
 import type { Snapshot } from '../shared/api.ts';
 import { FakeRuntime } from './fake-runtime.ts';
 import { Game } from './game.ts';
 import { channelName, registerIpc } from './ipc.ts';
 import { currentPlatform } from './platform/index.ts';
+import type { Platform } from './platform/types.ts';
 import { DockerRuntime } from './runtime.ts';
 import type { GameRuntime } from './runtime.ts';
 import { GitHubContentSource } from './services/content/github.ts';
@@ -60,12 +62,26 @@ function contentSource(): ContentSource {
     : new GitHubContentSource({ repository: config.repository, release: config.release, baseUrl: config.baseUrl });
 }
 
+const platform: Platform | null = isE2E ? null : currentPlatform();
+
 function runtime(): GameRuntime {
-  if (isE2E) {
+  if (!platform) {
     return new FakeRuntime(process.env.BUGDETECTIVE_E2E_SCENARIO);
   }
   const contextRoot = app.isPackaged ? join(process.resourcesPath, 'docker') : join(appRoot, 'build', 'docker');
-  return new DockerRuntime(currentPlatform(), { contextRoot });
+  return new DockerRuntime(platform, { contextRoot });
+}
+
+/** Opens an allowlisted URL with the platform's browser command (WSL: the Windows browser). */
+async function openUrl(url: string): Promise<void> {
+  const command = platform?.browserCommand(url);
+  if (!command) {
+    await shell.openExternal(url);
+    return;
+  }
+  const child = spawn(command.command, command.args, { detached: true, stdio: 'ignore', shell: false });
+  child.on('error', () => {});
+  child.unref();
 }
 
 function hardenSessions(): void {
@@ -136,7 +152,7 @@ async function main(): Promise<void> {
   const language = app.getLocale().toLowerCase().startsWith('pt') ? 'pt' : 'en';
   await game.init(language);
 
-  registerIpc(game, devRendererUrl ? new URL(devRendererUrl).origin : null);
+  registerIpc(game, devRendererUrl ? new URL(devRendererUrl).origin : null, openUrl);
   window = createWindow();
 
   app.on('second-instance', () => {

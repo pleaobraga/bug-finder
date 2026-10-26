@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { launch, startFirstTicket } from './fixtures.ts';
+import { dragCard, launch, startFirstTicket } from './fixtures.ts';
 
 test('the player can only drag To Do → In Progress → In QA; QA and review move the rest', async () => {
   const { page, close } = await launch({ qa: ['gate2', 'passed'], qaDelayMs: 800 });
@@ -18,13 +18,13 @@ test('the player can only drag To Do → In Progress → In QA; QA and review mo
     const direct = await page.evaluate(() => window.bugDetective.move(1, 'done').then(() => 'moved', (error: Error) => error.message));
     expect(direct).toContain('moveNotAllowed');
 
-    await card.dragTo(page.getByTestId('column-inProgress'));
+    await dragCard(page, 1, 'inProgress');
     await expect(card).toHaveAttribute('data-status', 'inProgress');
     await card.dragTo(page.getByTestId('column-todo'));
     await expect(card).toHaveAttribute('data-status', 'inProgress');
 
     // In QA: the card cannot be dragged anywhere while QA runs, then comes back with a comment.
-    await card.dragTo(page.getByTestId('column-inQa'));
+    await dragCard(page, 1, 'inQa');
     await expect(card).toHaveAttribute('data-status', 'inQa');
     await expect(card).toHaveAttribute('draggable', 'false');
     const cancel = await page.evaluate(() => window.bugDetective.move(1, 'inProgress').then(() => 'moved', (error: Error) => error.message));
@@ -33,7 +33,7 @@ test('the player can only drag To Do → In Progress → In QA; QA and review mo
     await expect(card).toContainText('1 QA attempt');
 
     // Second attempt passes: Code Review, then Done after accepting the review.
-    await card.dragTo(page.getByTestId('column-inQa'));
+    await dragCard(page, 1, 'inQa');
     await expect(card).toHaveAttribute('data-status', 'codeReview', { timeout: 15_000 });
     await expect(card).toHaveAttribute('draggable', 'false');
     await card.click();
@@ -78,9 +78,10 @@ test('a QA timeout returns the card with the timeout template', async () => {
   try {
     await startFirstTicket(page);
     const card = page.getByTestId('card-1');
-    await card.dragTo(page.getByTestId('column-inProgress'));
-    await card.dragTo(page.getByTestId('column-inQa'));
-    await expect(card).toHaveAttribute('data-status', 'inProgress', { timeout: 15_000 });
+    await dragCard(page, 1, 'inProgress');
+    await dragCard(page, 1, 'inQa');
+    await expect(card).toContainText('1 QA attempt', { timeout: 15_000 });
+    await expect(card).toHaveAttribute('data-status', 'inProgress');
     await card.click();
     await page.getByTestId('tab-qa').click();
     await expect(page.getByTestId('qa-comment').first()).toHaveAttribute('data-kind', 'timeout');

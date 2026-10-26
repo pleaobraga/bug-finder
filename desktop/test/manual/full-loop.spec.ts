@@ -1,5 +1,5 @@
 /**
- * Drives the real app (real Docker Desktop, VS Code and content) through the whole game:
+ * Drives the real app (real Docker, VS Code and content) through the whole game, on Windows or Linux/WSL 2:
  * checklist, unlock, VS Code attach, QA fail, hints, solution, fix, QA pass, review, Done, for
  * all four tickets; restart during QA; export, volume deletion and restore.
  *
@@ -13,17 +13,19 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
 import type { ElectronApplication, Page } from '@playwright/test';
+import { dragCard } from '../e2e/fixtures.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const supportdesk = resolve(root, '..', 'supportdesk');
-const DOCKER = 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe';
+const DOCKER = process.platform === 'win32' ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : 'docker';
 const CONTAINER = 'bugdetective-workspace';
 
 const docker = (...args: string[]) => execFileSync(DOCKER, args, { encoding: 'utf8' });
 const log = (message: string) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${message}`);
 
 async function open(userData: string): Promise<{ app: ElectronApplication; page: Page }> {
-  const app = await electron.launch({ args: [root], env: { ...process.env, BUGDETECTIVE_USER_DATA: userData } });
+  const { ELECTRON_RUN_AS_NODE: _ignored, ...parentEnv } = process.env;
+  const app = await electron.launch({ args: [root], env: { ...parentEnv, BUGDETECTIVE_USER_DATA: userData } });
   const page = await app.firstWindow();
   return { app, page };
 }
@@ -48,13 +50,12 @@ async function cardStatus(page: Page, ticket: number, status: string, timeout = 
 
 async function submitQa(page: Page, ticket: number, expected: 'inProgress' | 'codeReview') {
   const started = Date.now();
-  await page.getByTestId(`card-${ticket}`).dragTo(page.getByTestId('column-inQa'));
-  await expect(page.getByTestId(`card-${ticket}`)).toHaveAttribute('data-status', 'inQa');
+  await dragCard(page, ticket, 'inQa');
   await cardStatus(page, ticket, expected);
   log(`ticket ${ticket}: QA → ${expected} in ${((Date.now() - started) / 1000).toFixed(0)} s`);
 }
 
-test('the full game loop on Windows with Docker Desktop', async () => {
+test('the full game loop with real Docker and VS Code', async () => {
   const userData = await mkdtemp(join(tmpdir(), 'João Silva full-loop-'));
   let { app, page } = await open(userData);
 
@@ -95,7 +96,11 @@ test('the full game loop on Windows with Docker Desktop', async () => {
 
     if (ticket === 1) {
       // Open app in browser: the dev server on the published port, through the forwarder.
-      await page.getByTestId('start-dev-server').click();
+      // The status (with the published port) loads asynchronously; the button only shows when the server is down.
+      await expect(page.getByTestId('open-browser')).toContainText(':');
+      if (await page.getByTestId('start-dev-server').isVisible()) {
+        await page.getByTestId('start-dev-server').click();
+      }
       const port = Number(/:(\d+)/.exec((await page.getByTestId('open-browser').textContent()) ?? '')?.[1]);
       await expect.poll(async () => (await fetch(`http://127.0.0.1:${port}/`).catch(() => null))?.status ?? 0, { timeout: 120_000 }).toBe(200);
       const tickets = (await (await fetch(`http://127.0.0.1:${port}/api/tickets`)).json()) as unknown[];
@@ -104,12 +109,11 @@ test('the full game loop on Windows with Docker Desktop', async () => {
     }
     await page.getByTestId('close-panel').click();
 
-    await page.getByTestId(`card-${ticket}`).dragTo(page.getByTestId('column-inProgress'));
-    await expect(page.getByTestId(`card-${ticket}`)).toHaveAttribute('data-status', 'inProgress');
+    await dragCard(page, ticket, 'inProgress');
 
     if (ticket === 1) {
       // Close the app during QA, then start it again.
-      await page.getByTestId('card-1').dragTo(page.getByTestId('column-inQa'));
+      await dragCard(page, 1, 'inQa');
       await expect(page.getByTestId('card-1')).toHaveAttribute('data-status', 'inQa');
       await page.waitForTimeout(5000);
       await app.close();

@@ -180,5 +180,9 @@ export function createWindowsPlatform(overrides: Partial<WindowsDeps> = {}): Pla
         server.listen({ port, host: '127.0.0.1', exclusive: true }, () => server.close(() => resolve(true)));
       });
     },
+
+    browserCommand() {
+      return null;
+    },
   };
 }

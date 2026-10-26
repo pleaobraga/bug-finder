@@ -348,17 +348,14 @@ export class Workspace {
     await this.exec(['npm', 'run', 'db:reset'], { timeoutMs: 120_000, onLine });
   }
 
+  /** Asks through the forwarder, from inside the container, so host networking does not matter. */
   async isDevServerUp(): Promise<boolean> {
-    const ports = await this.ports();
-    if (!ports?.client) {
-      return false;
-    }
-    try {
-      const response = await fetch(`http://127.0.0.1:${ports.client}/`, { signal: AbortSignal.timeout(2000) });
-      return response.ok;
-    } catch {
-      return false;
-    }
+    const result = await this.docker.exec(
+      this.names.container,
+      ['curl', '--fail', '--silent', '--output', '/dev/null', '--max-time', '2', `http://127.0.0.1:${CONTAINER_PORTS.client}/`],
+      { user: 'node', timeoutMs: 10_000 },
+    );
+    return result.code === 0;
   }
 
   /** Starts `npm run dev` in the background inside the container, logging to /tmp/supportdesk-dev.log. */

@@ -1,6 +1,6 @@
 /**
  * Everything that differs between operating systems lives behind this interface.
- * Only Windows is implemented for now (windows.ts); macOS and Linux come later.
+ * Implemented for Windows (windows.ts) and Linux, including WSL 2 (linux.ts); macOS comes later.
  */
 import type { CommandRunner } from '../services/process.ts';
 
@@ -30,7 +30,7 @@ export interface DockerLocations {
 }
 
 export interface Platform {
-  readonly id: 'windows';
+  readonly id: 'windows' | 'linux';
   readonly runner: CommandRunner;
   locateDocker(): Promise<DockerLocations>;
   /** True when the Docker Desktop process is running (the engine may still be starting). */
@@ -41,4 +41,6 @@ export interface Platform {
   /** Converts a host path for use as a docker bind-mount source. */
   dockerHostPath(path: string): string;
   isPortFree(port: number): Promise<boolean>;
+  /** A command that opens a URL in the user's browser, or null to use Electron's shell.openExternal. */
+  browserCommand(url: string): { command: string; args: string[] } | null;
 }

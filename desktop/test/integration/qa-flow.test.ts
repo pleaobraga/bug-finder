@@ -1,5 +1,5 @@
 /**
- * End-to-end flow with real Docker and LocalContentSource (run on Windows with Docker Desktop):
+ * End-to-end flow with real Docker and LocalContentSource (Windows with Docker Desktop, or Linux/WSL 2):
  *   unlock stage 1 → QA on the buggy stage (Gate 2 fails) → apply reference.patch inside the
  *   workspace container → QA again (both gates pass), plus timeout, export/restore and
  *   interrupted QA. Uses the "bugdetective-test" resource prefix, never the player's volumes.
@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Game } from '../../src/main/game.ts';
-import { createWindowsPlatform } from '../../src/main/platform/windows.ts';
+import { currentPlatform } from '../../src/main/platform/index.ts';
 import { DockerRuntime } from '../../src/main/runtime.ts';
 import { LocalContentSource } from '../../src/main/services/content/local.ts';
 import { PackageStore } from '../../src/main/services/content/store.ts';
@@ -24,7 +24,7 @@ import * as rules from '../../src/shared/kanban.ts';
 const root = resolve(import.meta.dirname, '..', '..');
 const supportdesk = resolve(root, '..', 'supportdesk');
 const PREFIX = 'bugdetective-test';
-const platform = createWindowsPlatform();
+const platform = currentPlatform();
 
 let dir: string;
 let docker: Docker;
@@ -87,7 +87,7 @@ async function submit(game: Game, ticket: number) {
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), 'João Silva bd-integration-'));
   const { cli } = await platform.locateDocker();
-  if (!cli) throw new Error('docker.exe not found');
+  if (!cli) throw new Error('The docker CLI was not found');
   docker = new Docker(cli, runCommand);
   runtime = new DockerRuntime(platform, { contextRoot: join(root, 'build', 'docker'), prefix: PREFIX });
   // Start from a clean test namespace (never the player's "bugdetective-*" resources).

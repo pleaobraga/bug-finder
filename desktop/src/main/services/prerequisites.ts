@@ -38,7 +38,8 @@ export class Prerequisites {
       return 'running';
     }
     if (!environment.dockerDesktopApp) {
-      return 'notInstalled';
+      // Docker Engine (Linux): the CLI is there but the daemon does not answer.
+      return 'notRunning';
     }
     return (await this.platform.isDockerDesktopRunning()) ? 'starting' : 'notRunning';
   }
