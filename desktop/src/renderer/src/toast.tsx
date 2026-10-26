@@ -1,20 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorInfo } from './api.ts';
+import { ToastContext } from './toast-context.ts';
+import type { ToastApi } from './toast-context.ts';
 
 interface Toast {
   id: number;
   text: string;
   tone: 'info' | 'error';
 }
-
-interface ToastApi {
-  info(text: string): void;
-  error(error: unknown): void;
-}
-
-const ToastContext = createContext<ToastApi | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -55,12 +50,4 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast(): ToastApi {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast outside ToastProvider');
-  }
-  return context;
 }

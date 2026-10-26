@@ -5,6 +5,7 @@
 - Product requirements: `Bug Detective — Product Requirements v4.md`.
 - Code, comments and commit messages are in English. Pedro often writes in Portuguese; reply in the language he uses.
 - Before implementing a behavior change, propose the design and get approval first.
+- Every new feature or behavior change ships with tests that cover it (unit tests at least; integration or e2e when it touches Docker, Git or the UI flow), and the existing suites must still pass before the task is reported as done.
 
 ## Keep the docs in sync
 

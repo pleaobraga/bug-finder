@@ -4,7 +4,7 @@ import type { SaveSummary, Snapshot } from '@shared/api.ts';
 import { LANGUAGES, MAX_QA_TIMEOUT_SECONDS, MIN_QA_TIMEOUT_SECONDS, THEMES } from '@shared/types.ts';
 import { api } from '../api.ts';
 import { Badge, Button, Card, LogView, Modal, SectionTitle } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 const LANGUAGE_NAMES = { en: 'English', pt: 'Português (Brasil)' };
 

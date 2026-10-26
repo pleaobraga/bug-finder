@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CheckResult, ExternalLink, Snapshot } from '@shared/api.ts';
 import { api } from '../api.ts';
 import { Button, Card, StatusIcon } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 const LINKS: Record<CheckResult['id'], ExternalLink> = {
   docker: 'dockerDesktop',

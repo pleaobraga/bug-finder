@@ -40,13 +40,12 @@ export function App() {
   const [checklistDone, setChecklistDone] = useState(false);
   useThemeAndLanguage(snapshot);
 
-  // The checklist is skipped when everything already passes on start.
+  // The checklist is skipped when everything already passes and a game is in progress. Once
+  // passed, it stays passed for the session (state adjusted during render, not in an effect).
   const allOk = snapshot?.prerequisites?.allOk ?? false;
-  useEffect(() => {
-    if (allOk && !checklistDone && snapshot?.state.tickets.length) {
-      setChecklistDone(true);
-    }
-  }, [allOk, checklistDone, snapshot?.state.tickets.length]);
+  if (allOk && !checklistDone && snapshot?.state.tickets.length) {
+    setChecklistDone(true);
+  }
 
   if (!snapshot || !snapshot.prerequisites) {
     return (

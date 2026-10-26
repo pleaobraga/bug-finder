@@ -1,0 +1,2 @@
+# Typecheck, unit tests and the real-Docker integration test (Docker must be running).
+cd desktop && npm run verify:push

@@ -114,6 +114,8 @@ export const gameStateSchema = z.object({
 // ---------------------------------------------------------------------------
 // Migrations. Each one takes the raw JSON of version N and returns version N + 1.
 
+// Raw JSON of older schema versions: its shape is only known field by field.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Raw = Record<string, any>;
 
 /**

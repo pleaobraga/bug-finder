@@ -21,7 +21,13 @@
     "test": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:e2e": "npm run build && playwright test",
-    "dist:win": "npm run build && electron-builder --win nsis --publish never"
+    "dist:win": "npm run build && electron-builder --win nsis --publish never",
+    "postinstall": "npm ci --prefix tools/lint --no-audit --no-fund",
+    "prepare": "cd .. && husky desktop/.husky",
+    "lint": "node tools/lint/node_modules/eslint/bin/eslint.js .",
+    "lint:fix": "node tools/lint/node_modules/eslint/bin/eslint.js . --fix",
+    "pretest:integration": "npm run prepare:resources && npm run build:stages",
+    "verify:push": "npm run typecheck && npm test && npm run test:integration"
   },
   "dependencies": {
     "fflate": "0.8.3",
@@ -41,7 +47,9 @@
     "electron": "45.0.0",
     "electron-builder": "26.18.0",
     "electron-vite": "6.0.0",
+    "husky": "9.1.7",
     "i18next": "26.5.11",
+    "lint-staged": "17.6.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-i18next": "17.1.9",
@@ -58,5 +66,8 @@
   "bugDetective": {
     "contentRepository": "pleaobraga/supportdesk-qa",
     "contentRelease": "latest"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": "node tools/lint/node_modules/eslint/bin/eslint.js --fix"
   }
 }

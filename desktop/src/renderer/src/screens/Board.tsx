@@ -7,7 +7,7 @@ import { COLUMNS } from '@shared/types.ts';
 import type { Column, TicketState } from '@shared/types.ts';
 import { api } from '../api.ts';
 import { Badge, Spinner } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 const DRAG_TYPE = 'application/x-bugdetective-ticket';
 

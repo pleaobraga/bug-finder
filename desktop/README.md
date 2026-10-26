@@ -26,6 +26,8 @@ docker/workspace/      the player's workspace image (+ the port forwarder)
 docker/qa/             the QA image (Node 26 + Playwright Chromium + the SupportDesk QA CLI)
 content/               company story and manager messages (story.en.json, story.pt.json)
 tools/                 build-stage-packages.ts, prepare-resources.ts, sync-windows.sh, win.sh
+tools/lint/            the isolated ESLint toolchain (config.js, its own package.json)
+.husky/                git hooks (pre-commit, pre-push)
 test/unit|integration|e2e|manual
 ```
 
@@ -110,6 +112,24 @@ Docker is shared: `docker.exe` on Windows and the WSL integration talk to the sa
 | `npm run test:integration` | Windows or Linux/WSL 2 + Docker | Real Docker: unlock stage 1, QA on the buggy stage (Gate 2 fails), infinite-loop timeout, `reference.patch` applied in the workspace container (both gates pass), next stage, export/delete/restore, interrupted QA. Uses the `bugdetective-test-*` resources only. Run `npm run build` first. |
 | `npm run test:e2e` | Windows or Linux/WSL 2 (WSLg) | Playwright for Electron with the fake runtime: first-run checklist, Docker banner, Kanban drag rules, ticket panel, language, restart |
 | `npx playwright test --config playwright.manual.config.ts` | Windows or Linux/WSL 2, + Docker + VS Code | The full game loop through the real UI (all four tickets, VS Code attach, restart during QA, export/restore). Opens VS Code windows. |
+
+## Lint and git hooks
+
+ESLint 10 with typescript-eslint, plus the React Hooks and React Refresh rules for the renderer. The toolchain lives in `tools/lint/` with its own `package.json`, because typescript-eslint needs the TypeScript JavaScript API and TypeScript 7 (the app's compiler) no longer ships it: the lint package pins TypeScript 6.0 for the parser only. `npm install` in `desktop/` installs it too (`postinstall`), and `eslint.config.js` re-exports `tools/lint/config.js`.
+
+```sh
+npm run lint        # check
+npm run lint:fix    # fix what can be fixed
+```
+
+Husky installs two hooks in the repository root (`prepare` runs `husky desktop/.husky`; the git root is the folder above `desktop/`):
+
+| Hook | Runs | Blocks when |
+| --- | --- | --- |
+| `pre-commit` | lint-staged: `eslint --fix` on the staged `.ts/.tsx/.js/.mjs/.cjs` files, fixes re-staged | an error remains after `--fix` (warnings pass) |
+| `pre-push` | `npm run verify:push`: typecheck, unit tests, integration tests with real Docker (about 2–3 minutes) | anything fails, including Docker not running |
+
+The hooks need Node.js 26 on the `PATH` of the shell that runs git. If you commit from an editor whose git does not load nvm, create `~/.config/husky/init.sh` with `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"`. To skip the hooks once (not recommended): `git commit --no-verify` / `git push --no-verify`. The VS Code ESLint extension must use the toolchain in `tools/lint`: set `"eslint.nodePath": "desktop/tools/lint/node_modules"` in the workspace settings.
 
 ## Installer
 

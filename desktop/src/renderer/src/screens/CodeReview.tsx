@@ -6,7 +6,7 @@ import { api } from '../api.ts';
 import { DiffView } from '../components/DiffView.tsx';
 import { Markdown } from '../components/Markdown.tsx';
 import { Button, Card, SectionTitle } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 export function CodeReview({ snapshot, ticketNumber, onBack }: { snapshot: Snapshot; ticketNumber: number; onBack: () => void }) {
   const { t } = useTranslation();

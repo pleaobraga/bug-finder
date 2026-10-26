@@ -1,0 +1,2 @@
+# Lint and auto-fix the staged files of the desktop app; remaining errors block the commit.
+cd desktop && npx --no-install lint-staged

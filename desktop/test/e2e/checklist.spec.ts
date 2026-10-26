@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { dragCard, launch } from './fixtures.ts';
+import { launch } from './fixtures.ts';
 
 test('the first-run checklist blocks the game until every prerequisite passes', async () => {
   const { page, close } = await launch({ docker: 'notRunning', devcontainers: false });

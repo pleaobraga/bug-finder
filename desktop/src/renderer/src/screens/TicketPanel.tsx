@@ -10,23 +10,24 @@ import { DiffView } from '../components/DiffView.tsx';
 import { Markdown } from '../components/Markdown.tsx';
 import { QaCommentView } from '../components/QaComment.tsx';
 import { Badge, Button, LogView, Tabs } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 type Tab = 'ticket' | 'qa' | 'history' | 'senior';
 
 /** Loads the ticket's texts again whenever the ticket, its progress or the language changes. */
 function useTicketContent(ticket: TicketState, language: 'en' | 'pt') {
   const [content, setContent] = useState<TicketContent | null>(null);
-  const key = `${ticket.ticket}:${ticket.status}:${ticket.hintsRevealed}:${ticket.solutionRevealed}:${language}`;
+  const { ticket: number, status, hintsRevealed, solutionRevealed } = ticket;
   useEffect(() => {
     let ignore = false;
-    void api.ticketContent(ticket.ticket, language).then((loaded) => {
+    void api.ticketContent(number, language).then((loaded) => {
       if (!ignore) setContent(loaded);
     });
     return () => {
       ignore = true;
     };
-  }, [key]);
+    // status, hints and solution decide what the main process returns, so they trigger a reload.
+  }, [number, language, status, hintsRevealed, solutionRevealed]);
   return content;
 }
 
@@ -232,15 +233,13 @@ export function TicketPanel({
   const senior = story(language).people.senior.name;
   const qaRunning = ticket.status === 'inQa';
 
-  // Jump to the QA tab when a QA run finishes with a new comment.
+  // Jump to the QA tab when a QA run finishes with a new comment (adjusted during render).
   const commentCount = ticket.comments.length;
   const [seenComments, setSeenComments] = useState(commentCount);
-  useEffect(() => {
-    if (commentCount > seenComments) {
-      setTab('qa');
-      setSeenComments(commentCount);
-    }
-  }, [commentCount, seenComments]);
+  if (commentCount > seenComments) {
+    setSeenComments(commentCount);
+    setTab('qa');
+  }
 
   return (
     <div className="fixed inset-0 z-30 flex justify-end bg-slate-950/30" onClick={onClose} data-testid="ticket-panel-backdrop">

@@ -7,7 +7,7 @@ import { api } from '../api.ts';
 import { story } from '../content.ts';
 import { Markdown } from '../components/Markdown.tsx';
 import { Badge, Button, Card, LogView, SectionTitle, StatusIcon } from '../components/ui.tsx';
-import { useToast } from '../toast.tsx';
+import { useToast } from '../toast-context.ts';
 
 export function EnvironmentPanel({ snapshot }: { snapshot: Snapshot }) {
   const { t } = useTranslation();
