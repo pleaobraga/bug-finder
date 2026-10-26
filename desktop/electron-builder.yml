@@ -1,0 +1,28 @@
+appId: dev.bugdetective.desktop
+productName: Bug Detective
+copyright: Bug Detective
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+# Docker build contexts (workspace and QA images, with the QA CLI) and their tags.
+extraResources:
+  - from: build/docker
+    to: docker
+asar: true
+npmRebuild: false
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: Bug-Detective-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Bug Detective

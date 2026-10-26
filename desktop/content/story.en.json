@@ -1,0 +1,48 @@
+{
+  "company": {
+    "name": "Lanternfish Labs",
+    "tagline": "A small software consultancy that builds and maintains apps for growing companies.",
+    "about": "Lanternfish Labs is a twelve-person consultancy. Most of the team works remotely, with a weekly planning call on Mondays and pairing sessions whenever someone is stuck. New developers start on a client project right away, with small, real bug fixes as onboarding."
+  },
+  "client": {
+    "name": "Harborline Outfitters",
+    "about": "Harborline sells outdoor gear online. Its support team of eight answers customers by email and chat, and tracks everything in SupportDesk, the early-stage platform Lanternfish is building for them.",
+    "contacts": "Hannah Brooks (support team lead), Marcus Bell (support operations manager) and Elena Duarte (customer support supervisor) report the bugs."
+  },
+  "project": {
+    "name": "SupportDesk",
+    "about": "A two-screen support app: a ticket list with search, and a details screen where agents change status, priority and assignee. React and Vite on the front end, Node.js, Express and SQLite on the back end."
+  },
+  "people": {
+    "manager": { "name": "Rafaela Nunes", "role": "Engineering manager" },
+    "senior": { "name": "Priya Raman", "role": "Senior developer" }
+  },
+  "messages": {
+    "welcome": {
+      "subject": "Welcome to Lanternfish Labs!",
+      "body": "Hi, and welcome aboard!\n\nI'm Rafaela, the engineering manager here. You're joining the **SupportDesk** project, which we're building for **Harborline Outfitters**. Their support team already uses it every day, so the bugs they report are real and they hurt.\n\nHere's how we work:\n\n- Your tickets show up on the **Board**. Take one at a time: drag it to **In Progress** when you start, and to **In QA** when you think it's fixed.\n- The code lives in your workspace container. **Open in VS Code** attaches your editor to it, with Node, the terminal and the debugger already set up. Run `npm run dev` in the VS Code terminal and use **Open app in browser** to try the app.\n- QA runs the project tests first, then checks the ticket itself. If something fails, the card comes back with notes.\n- Stuck? Message **Priya** from the ticket. She'll point you in the right direction, one hint at a time.\n\nWhen you're ready, click **Get next assignment**. I picked a nice first one for you.\n\nRafaela"
+    },
+    "assignments": {
+      "1": {
+        "subject": "Your first ticket: SD-214",
+        "body": "Hannah's team flagged this one this morning: the **Previous** and **Next** buttons on the ticket details page change the address bar, but the page keeps showing the old ticket. One agent already changed the status of the wrong ticket because of it.\n\nIt's a good first bug: easy to reproduce, and a classic. Take your time, reproduce it first, and check the browser DevTools.\n\nRafaela"
+      },
+      "2": {
+        "subject": "Next up: SD-231",
+        "body": "Nice work on the navigation bug. Hannah's team noticed the difference right away.\n\nMarcus sent us a more worrying one: assigning a ticket to someone who left the company shows a **success** message, but nothing is saved. A customer waited three days because of it. Read the ticket carefully: there are two separate problems in it, and QA checks both.\n\nRafaela"
+      },
+      "3": {
+        "subject": "Next up: SD-238",
+        "body": "Thanks for sorting out the assignments; Marcus says the team trusts the success messages again.\n\nElena reports that priority changes don't survive a page refresh. The screen says it worked, and there are no errors anywhere. This one is about following the data, so expect to spend some time in the Network tab.\n\nRafaela"
+      },
+      "4": {
+        "subject": "Last onboarding ticket: SD-245",
+        "body": "Great progress. This is the last one of your onboarding, and it's marked **Critical**.\n\nSince the latest release, some tickets open as a completely blank page. The server logs are clean, so you'll need the browser to tell you what's going on. Priya says it's her favorite kind of bug to teach.\n\nRafaela"
+      }
+    },
+    "completion": {
+      "subject": "You finished your onboarding!",
+      "body": "That's all four tickets: navigation, assignment, priority and the blank screen. Hannah, Marcus and Elena all sent their thanks, and Harborline's support team is having a much calmer week.\n\nYou traced async state, followed data across the client and the server, and debugged a crash with nothing but the browser console. That's exactly the kind of work we do every day.\n\nThanks for your effort, and welcome to the team for real.\n\nRafaela"
+    }
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "app": {
+    "name": "Bug Detective"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "board": "Board",
+    "settings": "Settings"
+  },
+  "common": {
+    "checkAgain": "Check again",
+    "close": "Close",
+    "cancel": "Cancel",
+    "working": "Working…",
+    "learnMore": "How to install",
+    "showLog": "Show details",
+    "hideLog": "Hide details"
+  },
+  "checklist": {
+    "title": "Before you start",
+    "intro": "Bug Detective runs SupportDesk in Docker and opens it in your own VS Code. Let's check that everything is installed.",
+    "allOk": "Everything is ready.",
+    "continue": "Start playing",
+    "status": {
+      "ok": "Ready",
+      "missing": "Missing",
+      "pending": "Starting…",
+      "warning": "Check"
+    },
+    "docker": {
+      "title": "Docker Desktop",
+      "ok": "Docker Desktop is running.",
+      "notInstalled": "Docker Desktop is not installed. Install it with the WSL 2 backend, then come back.",
+      "notRunning": "Docker Desktop is installed but not running.",
+      "starting": "Docker Desktop is starting. This can take a minute.",
+      "start": "Start Docker Desktop"
+    },
+    "wsl": {
+      "title": "WSL 2",
+      "ok": "WSL 2 is available.",
+      "notFound": "WSL is not installed. Open PowerShell as administrator and run: wsl --install",
+      "wsl1Only": "Only WSL 1 was found. Docker Desktop needs WSL 2: run wsl --set-default-version 2"
+    },
+    "vscode": {
+      "title": "Visual Studio Code",
+      "ok": "VS Code was found.",
+      "cliNotFound": "VS Code was not found. Install it (the default options are fine), then check again."
+    },
+    "devcontainers": {
+      "title": "Dev Containers extension",
+      "ok": "The Dev Containers extension is installed.",
+      "extensionMissing": "VS Code needs the Dev Containers extension to open the code inside the container.",
+      "checkFailed": "Could not list the VS Code extensions. Try again.",
+      "install": "Install extension"
+    }
+  },
+  "banner": {
+    "dockerStopped": "Docker is not running. Actions that need it are paused until it is back.",
+    "dockerStarting": "Docker Desktop is starting…",
+    "startDocker": "Start Docker Desktop"
+  },
+  "environment": {
+    "title": "Downloads needed",
+    "intro": "Some parts of the game environment are not on this computer yet. Connect to the internet, then install them. After that, the game works offline.",
+    "items": {
+      "workspaceImage": "Workspace image (Node.js 26, Git), about 1.1 GB",
+      "qaImage": "QA image (Node.js 26, Playwright Chromium), about 3 GB",
+      "projectDependencies": "Project dependencies (node_modules), about 160 MB"
+    },
+    "install": "Download and install",
+    "installing": "Installing… This can take several minutes.",
+    "ready": "Environment ready"
+  },
+  "dashboard": {
+    "welcome": "Welcome to {{company}}",
+    "client": "Client",
+    "project": "Project",
+    "status": "Project status",
+    "ticketsDone_one": "{{count}} of {{total}} tickets done",
+    "ticketsDone_other": "{{count}} of {{total}} tickets done",
+    "current": "Current ticket",
+    "noTicket": "No ticket yet.",
+    "inbox": "Inbox",
+    "from": "From {{name}}, {{role}}",
+    "nextAssignment": "Get next assignment",
+    "unlocking": "Downloading and setting up the ticket…",
+    "finishFirst": "Finish the current ticket to get the next one.",
+    "allDone": "You finished every ticket.",
+    "openBoard": "Open the board"
+  },
+  "board": {
+    "title": "Board",
+    "columns": {
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "inQa": "In QA",
+      "codeReview": "Code Review",
+      "done": "Done"
+    },
+    "hint": "Drag your card from To Do to In Progress, then to In QA when it is fixed. The other moves happen on their own.",
+    "notAllowed": "Only QA and the code review move a card there.",
+    "qaRunning": "QA is running…",
+    "attempts_one": "{{count}} QA attempt",
+    "attempts_other": "{{count}} QA attempts",
+    "empty": "No tickets yet. Get your first assignment on the Dashboard."
+  },
+  "ticket": {
+    "tabs": {
+      "ticket": "Ticket",
+      "qa": "QA",
+      "history": "History",
+      "senior": "Ask {{name}}"
+    },
+    "openVSCode": "Open in VS Code",
+    "openBrowser": "Open app in browser",
+    "startDevServer": "Start dev server",
+    "devServerDown": "The app is not running. Run npm run dev in the VS Code terminal, or start it here.",
+    "branch": "Branch: {{branch}}",
+    "readOnly": "This ticket is done. It is read-only.",
+    "openReview": "Open code review",
+    "noComments": "No QA comments yet.",
+    "attempt": "Attempt {{number}}",
+    "attemptResult": {
+      "passed": "passed",
+      "failed": "failed",
+      "timeout": "timed out"
+    },
+    "testsSummary": "{{passed}} passed, {{failed}} failed",
+    "activity": "Activity",
+    "attemptHistory": "QA attempts",
+    "noAttempts": "No QA attempts yet.",
+    "transition": "{{from}} → {{to}}",
+    "created": "Created in {{to}}",
+    "actor": {
+      "player": "you",
+      "system": "system"
+    },
+    "hintsUsed": "Hints used: {{used}} of {{total}}",
+    "solutionRevealed": "Solution revealed",
+    "senior": {
+      "intro": "{{name}} is happy to help. Hints come one at a time, from general to specific.",
+      "ask": "Ask for a hint",
+      "question": "Hi {{name}}, I'm stuck on this one. Could you point me in the right direction?",
+      "askSolution": "Show me the solution",
+      "solutionQuestion": "I tried the hints and I'm still stuck. Could you walk me through the fix?",
+      "solutionIntro": "Here is how the reference fix works. You still need to apply it in your workspace and pass QA.",
+      "onlyInProgress": "Move the card to In Progress to ask for help.",
+      "noMoreHints": "No more hints. You can ask for the full solution."
+    },
+    "vscodeHint": "VS Code opens attached to the workspace container. If a VS Code window for this workspace is already open but disconnected (after an update or a restore), close it or run \"Developer: Reload Window\" in it."
+  },
+  "qa": {
+    "comment": {
+      "gate1Failed": "Gate 1 failed: existing functionality broke. Your change made project tests fail. Fix them before resubmitting.",
+      "gate2Failed": "Gate 2 failed: the reported bug is still unresolved. The app still shows the behavior described in the ticket.",
+      "timeout": "Timeout: QA exceeded the time limit of {{seconds}} seconds, possibly because of a hang or infinite loop.",
+      "passed": "Passed: ready for code review.",
+      "interrupted": "QA was interrupted because the app closed. This does not count as an attempt. Move the card to In QA again.",
+      "error": "QA could not run. This does not count as an attempt. Details: {{detail}}",
+      "branchWarning": "Heads-up: your workspace is on branch {{branch}}, not on this ticket's branch. QA evaluates the current files anyway.",
+      "branchWarningDetached": "Heads-up: your workspace is not on this ticket's branch (detached HEAD). QA evaluates the current files anyway."
+    },
+    "gate": "Gate {{gate}}",
+    "failingTests": "Failing tests:",
+    "unfinishedTests": "Unfinished tests:",
+    "running": "QA is running for this ticket. It cannot be cancelled."
+  },
+  "review": {
+    "title": "Code review",
+    "reference": "Reference solution",
+    "yours": "Your changes",
+    "explanation": "Review notes",
+    "accept": "Accept review",
+    "noDiff": "No changes were found against the stage.",
+    "back": "Back to the board"
+  },
+  "diff": {
+    "empty": "No differences."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "qaTimeout": "QA time limit (seconds)",
+    "qaTimeoutHelp": "QA stops after this time and the attempt counts as failed.",
+    "status": "Status",
+    "docker": "Docker",
+    "vscode": "VS Code",
+    "progress": "Progress",
+    "export": "Export progress",
+    "exported": "Progress saved to {{path}}",
+    "exportHelp": "Your work lives in a Docker volume. A Docker reset deletes it, so export your progress from time to time.",
+    "restore": "Restore progress",
+    "restoreTitle": "Restore this save?",
+    "restoreSummary": "{{file}}, created {{date}}: {{done}} tickets done.",
+    "restoreWarning": "This replaces your current progress and your workspace repository. Uncommitted and unexported work will be lost.",
+    "restoreConfirm": "Restore",
+    "restored": "Progress restored.",
+    "about": "About",
+    "contentSource": "Stage source",
+    "versions": "Versions"
+  },
+  "errors": {
+    "dockerUnavailable": "Docker is not running. Start Docker Desktop and try again.",
+    "environmentNotReady": "Install the missing downloads on the Dashboard first.",
+    "moveNotAllowed": "That move is not allowed.",
+    "ticketNotDone": "Finish the current ticket first.",
+    "busy": "Please wait for the current task to finish.",
+    "invalidSave": "This file cannot be restored: {{message}}",
+    "noMoreHints": "There are no more hints.",
+    "hintsRemaining": "Ask for the remaining hints first.",
+    "workspaceNotRunning": "The workspace is not running.",
+    "failed": "Something went wrong: {{message}}"
+  }
+}

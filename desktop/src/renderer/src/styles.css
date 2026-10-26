@@ -1,0 +1,74 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* Dark mode follows the `dark` class on <html>, set from the theme setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * The game's design tokens, in one place. Semantic colors switch with the theme through CSS
+ * variables; Tailwind utilities (bg-surface, text-muted, border-line, ...) read them.
+ */
+:root {
+  --bd-canvas: oklch(97.5% 0.006 250);
+  --bd-surface: oklch(100% 0 0);
+  --bd-raised: oklch(96% 0.008 250);
+  --bd-ink: oklch(22% 0.03 260);
+  --bd-muted: oklch(48% 0.025 260);
+  --bd-line: oklch(90% 0.012 255);
+}
+
+.dark {
+  --bd-canvas: oklch(17% 0.02 262);
+  --bd-surface: oklch(21% 0.022 262);
+  --bd-raised: oklch(25.5% 0.024 262);
+  --bd-ink: oklch(94% 0.01 255);
+  --bd-muted: oklch(70% 0.02 255);
+  --bd-line: oklch(32% 0.025 262);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --color-canvas: var(--bd-canvas);
+  --color-surface: var(--bd-surface);
+  --color-raised: var(--bd-raised);
+  --color-ink: var(--bd-ink);
+  --color-muted: var(--bd-muted);
+  --color-line: var(--bd-line);
+}
+
+@theme {
+  --color-brand-50: oklch(97% 0.02 195);
+  --color-brand-100: oklch(93% 0.045 195);
+  --color-brand-400: oklch(74% 0.12 195);
+  --color-brand-500: oklch(65% 0.13 198);
+  --color-brand-600: oklch(56% 0.12 200);
+  --color-brand-700: oklch(48% 0.1 202);
+
+  /* Kanban columns */
+  --color-col-todo: oklch(65% 0.03 255);
+  --color-col-progress: oklch(68% 0.15 250);
+  --color-col-qa: oklch(76% 0.15 75);
+  --color-col-review: oklch(63% 0.18 300);
+  --color-col-done: oklch(68% 0.15 155);
+
+  --color-ok: oklch(66% 0.15 155);
+  --color-warn: oklch(77% 0.15 75);
+  --color-danger: oklch(62% 0.2 25);
+
+  --spacing-sidebar: 15rem;
+  --spacing-panel: 44rem;
+  --radius-card: 0.75rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans antialiased;
+}

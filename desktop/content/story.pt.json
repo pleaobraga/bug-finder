@@ -1,0 +1,48 @@
+{
+  "company": {
+    "name": "Lanternfish Labs",
+    "tagline": "Uma pequena consultoria de software que cria e mantém aplicações para empresas em crescimento.",
+    "about": "A Lanternfish Labs é uma consultoria de doze pessoas. Quase todo o time trabalha remoto, com uma reunião de planejamento às segundas e sessões de pareamento sempre que alguém trava. Pessoas desenvolvedoras novas começam direto em um projeto de cliente, com correções de bugs pequenas e reais como onboarding."
+  },
+  "client": {
+    "name": "Harborline Outfitters",
+    "about": "A Harborline vende equipamentos para atividades ao ar livre pela internet. O time de suporte, de oito pessoas, atende clientes por e-mail e chat e registra tudo no SupportDesk, a plataforma em fase inicial que a Lanternfish está construindo para eles.",
+    "contacts": "Hannah Brooks (líder do time de suporte), Marcus Bell (gerente de operações de suporte) e Elena Duarte (supervisora de atendimento) reportam os bugs."
+  },
+  "project": {
+    "name": "SupportDesk",
+    "about": "Uma aplicação de suporte com duas telas: uma lista de tickets com busca e uma tela de detalhes em que os atendentes mudam status, prioridade e responsável. React e Vite no front-end; Node.js, Express e SQLite no back-end."
+  },
+  "people": {
+    "manager": { "name": "Rafaela Nunes", "role": "Gerente de engenharia" },
+    "senior": { "name": "Priya Raman", "role": "Desenvolvedora sênior" }
+  },
+  "messages": {
+    "welcome": {
+      "subject": "Boas-vindas à Lanternfish Labs!",
+      "body": "Oi, que bom ter você com a gente!\n\nEu sou a Rafaela, gerente de engenharia. Você vai entrar no projeto **SupportDesk**, que estamos construindo para a **Harborline Outfitters**. O time de suporte deles já usa a aplicação todos os dias, então os bugs que eles reportam são reais e atrapalham de verdade.\n\nComo a gente trabalha:\n\n- Seus tickets aparecem no **Quadro**. Um de cada vez: arraste para **Em andamento** quando começar e para **Em QA** quando achar que está corrigido.\n- O código fica no seu container de workspace. **Abrir no VS Code** conecta o seu editor a ele, com Node, terminal e depurador já configurados. Rode `npm run dev` no terminal do VS Code e use **Abrir app no navegador** para testar a aplicação.\n- O QA roda primeiro os testes do projeto e depois verifica o próprio ticket. Se algo falhar, o card volta com observações.\n- Travou? Mande uma mensagem para a **Priya** pelo ticket. Ela vai te indicar o caminho, uma dica de cada vez.\n\nQuando quiser começar, clique em **Pegar próxima tarefa**. Escolhi uma boa primeira tarefa para você.\n\nRafaela"
+    },
+    "assignments": {
+      "1": {
+        "subject": "Seu primeiro ticket: SD-214",
+        "body": "O time da Hannah encontrou este hoje de manhã: os botões **Previous** e **Next** da tela de detalhes mudam a barra de endereço, mas a página continua mostrando o ticket antigo. Uma atendente já mudou o status do ticket errado por causa disso.\n\nÉ um bom primeiro bug: fácil de reproduzir e um clássico. Sem pressa: reproduza primeiro e confira o DevTools do navegador.\n\nRafaela"
+      },
+      "2": {
+        "subject": "Próximo: SD-231",
+        "body": "Bom trabalho no bug de navegação. O time da Hannah percebeu a diferença na hora.\n\nO Marcus mandou um mais preocupante: atribuir um ticket a alguém que saiu da empresa mostra uma mensagem de **sucesso**, mas nada é salvo. Um cliente esperou três dias por causa disso. Leia o ticket com atenção: há dois problemas separados nele, e o QA verifica os dois.\n\nRafaela"
+      },
+      "3": {
+        "subject": "Próximo: SD-238",
+        "body": "Obrigada por resolver as atribuições; o Marcus disse que o time voltou a confiar nas mensagens de sucesso.\n\nA Elena reporta que as mudanças de prioridade não sobrevivem a um refresh da página. A tela diz que funcionou, e não há erro em lugar nenhum. Este é sobre seguir os dados, então conte com um bom tempo na aba Network.\n\nRafaela"
+      },
+      "4": {
+        "subject": "Último ticket do onboarding: SD-245",
+        "body": "Ótimo progresso. Este é o último do seu onboarding, e está marcado como **Crítico**.\n\nDesde a última versão, alguns tickets abrem como uma página totalmente em branco. Os logs do servidor estão limpos, então quem vai te contar o que está acontecendo é o navegador. A Priya diz que este é o tipo de bug que ela mais gosta de ensinar.\n\nRafaela"
+      }
+    },
+    "completion": {
+      "subject": "Você concluiu o onboarding!",
+      "body": "São os quatro tickets: navegação, atribuição, prioridade e a tela em branco. A Hannah, o Marcus e a Elena mandaram agradecimentos, e o time de suporte da Harborline está tendo uma semana bem mais tranquila.\n\nVocê rastreou estado assíncrono, seguiu dados entre client e servidor e depurou um erro só com o console do navegador. É exatamente o tipo de trabalho que a gente faz todo dia.\n\nObrigada pelo empenho, e agora sim: boas-vindas oficiais ao time.\n\nRafaela"
+    }
+  }
+}
