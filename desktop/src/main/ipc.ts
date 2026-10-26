@@ -49,6 +49,7 @@ const schemas = {
   exportProgress: none,
   inspectSave: none,
   restoreProgress: z.tuple([z.string().uuid()]),
+  newGame: none,
 } as const;
 
 export type Channel = keyof typeof schemas;
@@ -135,6 +136,7 @@ export function registerIpc(game: Game, rendererOrigin: string | null, openUrl: 
       return game.inspectSave(file, basename(file));
     },
     restoreProgress: (token) => game.restoreProgress(token),
+    newGame: () => game.newGame(),
   };
 
   for (const channel of CHANNELS) {

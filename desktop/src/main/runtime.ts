@@ -37,8 +37,15 @@ export interface GameRuntime {
   /** Downloads and installs everything the environment report lists as missing. Needs internet. */
   installEnvironment(onLine: LineHandler): Promise<void>;
 
+  /**
+   * Makes the workspace repository belong to the game `gameId`, archiving player branches left by
+   * another game. Returns the number of archived branches.
+   */
+  claimWorkspace(gameId: string): Promise<number>;
   importStage(stage: number, files: ArchiveFile[], message: string): Promise<string>;
   checkoutPlayerBranch(stage: number): Promise<void>;
+  /** Discards everything on player/ticket-N and returns it to the clean stage commit. */
+  resetToStage(stage: number): Promise<{ changes: number; commits: number }>;
   currentBranch(): Promise<string | null>;
   playerDiff(stage: number): Promise<string>;
   resetDatabase(): Promise<void>;
@@ -54,7 +61,7 @@ export interface GameRuntime {
 
   bundle(): Promise<Uint8Array | null>;
   /** Replaces the workspace volume with the repository in `bundle`, checked out at `branch`. */
-  restoreWorkspace(bundle: Uint8Array | null, branch: string | null): Promise<void>;
+  restoreWorkspace(bundle: Uint8Array | null, branch: string | null, gameId?: string): Promise<void>;
 }
 
 export interface ImageConfig {
@@ -203,12 +210,20 @@ export class DockerRuntime implements GameRuntime {
     }
   }
 
+  async claimWorkspace(gameId: string) {
+    return (await this.runningWorkspace()).claimForGame(gameId);
+  }
+
   async importStage(stage: number, files: ArchiveFile[], message: string) {
     return (await this.runningWorkspace()).importStage(stage, files, message);
   }
 
   async checkoutPlayerBranch(stage: number) {
     await (await this.runningWorkspace()).checkoutPlayerBranch(stage);
+  }
+
+  async resetToStage(stage: number) {
+    return (await this.runningWorkspace()).resetToStage(stage);
   }
 
   async currentBranch() {
@@ -270,7 +285,7 @@ export class DockerRuntime implements GameRuntime {
     return (await workspace.hasRepository()) ? workspace.bundle() : null;
   }
 
-  async restoreWorkspace(bundle: Uint8Array | null, branch: string | null) {
+  async restoreWorkspace(bundle: Uint8Array | null, branch: string | null, gameId?: string) {
     const workspace = await this.workspace();
     if (bundle) {
       // A bad bundle must fail here, while the current volume still exists.
@@ -281,6 +296,10 @@ export class DockerRuntime implements GameRuntime {
     await workspace.ensureRunning();
     if (bundle && branch) {
       await workspace.restoreBundle(bundle, branch);
+    }
+    if (bundle && branch && gameId) {
+      // The restored repository is this game's own work: mark it, archive nothing.
+      await workspace.setGameId(gameId);
     }
   }
 }

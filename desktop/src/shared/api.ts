@@ -29,7 +29,7 @@ export interface EnvironmentReport {
   ready: boolean;
 }
 
-export type BusyTask = 'unlocking' | 'installing' | 'qa' | 'exporting' | 'restoring' | 'startingDocker' | null;
+export type BusyTask = 'unlocking' | 'starting' | 'installing' | 'qa' | 'exporting' | 'restoring' | 'startingDocker' | null;
 
 export interface Snapshot {
   state: GameState;
@@ -103,6 +103,8 @@ export interface BugDetectiveApi {
   /** Picks a save file and returns what it contains, so the player can confirm before overwriting. */
   inspectSave(): Promise<{ token: string; summary: SaveSummary } | null>;
   restoreProgress(token: string): Promise<void>;
+  /** Starts over; the workspace's branches from this game are archived on the next unlock. */
+  newGame(): Promise<void>;
 }
 
 export interface SaveSummary {

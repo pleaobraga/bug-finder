@@ -117,6 +117,30 @@ describe('Game', () => {
     expect(game.current.inbox.filter((message) => message.kind === 'assignment')).toHaveLength(2);
   });
 
+  it('resets the workspace to the stage when the ticket starts, and only then', async () => {
+    const { game, runtime } = createGame({ scenario: { qa: ['gate2', 'passed'] } });
+    await game.init();
+    await game.nextAssignment();
+    expect(runtime.resets).toEqual([]);
+    await game.move(1, 'inProgress');
+    expect(runtime.resets).toEqual([1]);
+    // A failed QA run returns the card to In Progress without touching the player's work.
+    await game.move(1, 'inQa');
+    await game.waitForQa();
+    expect(rules.findTicket(game.current, 1)!.status).toBe('inProgress');
+    expect(runtime.resets).toEqual([1]);
+  });
+
+  it('needs Docker to start a ticket, and leaves the card in To Do otherwise', async () => {
+    const { game, runtime } = createGame({ scenario: { stopDockerAfterUnlock: true } });
+    await game.init();
+    await game.nextAssignment();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await expect(game.move(1, 'inProgress')).rejects.toMatchObject({ code: 'dockerUnavailable' });
+    expect(rules.findTicket(game.current, 1)!.status).toBe('todo');
+    expect(runtime.resets).toEqual([]);
+  });
+
   it('enforces the drag rules in the main process', async () => {
     const { game } = createGame();
     await game.init();
@@ -187,6 +211,30 @@ describe('Game', () => {
     const { game: again } = createGame();
     await again.init();
     expect(rules.findTicket(again.current, 1)!.comments).toHaveLength(1);
+  });
+
+  it('starts a new game: resets the board and claims the workspace for the new game', async () => {
+    const { game, runtime } = createGame({ scenario: { qa: ['passed'] } });
+    await game.init();
+    await game.updateSettings({ language: 'pt', qaTimeoutSeconds: 240 });
+    await game.nextAssignment();
+    const firstGame = game.current.createdAt;
+    expect(runtime.claimed).toBe(firstGame);
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await game.newGame();
+    expect(game.current.tickets).toEqual([]);
+    expect(game.current.currentTicket).toBeNull();
+    expect(game.current.createdAt).not.toBe(firstGame);
+    expect(game.current.settings).toMatchObject({ language: 'pt', qaTimeoutSeconds: 240 });
+    expect(game.current.inbox.map((message) => message.kind)).toEqual(['welcome']);
+
+    const claim = vi.spyOn(runtime, 'claimWorkspace');
+    await game.nextAssignment();
+    expect(claim).toHaveBeenCalledWith(game.current.createdAt);
+    expect(await claim.mock.results[0].value).toBe(1);
+    expect(game.snapshot().log.some((line) => line.includes('Archived 1 branch'))).toBe(true);
+    expect(game.current.currentTicket).toBe(1);
   });
 
   it('clamps the QA timeout setting', async () => {

@@ -203,7 +203,13 @@
     "restored": "Progresso restaurado.",
     "about": "Sobre",
     "contentSource": "Origem dos stages",
-    "versions": "Versões"
+    "versions": "Versões",
+    "newGame": "Novo jogo",
+    "newGameHelp": "Recomeça do primeiro ticket. Os branches atuais ficam guardados no repositório do workspace, em archive/.",
+    "newGameTitle": "Começar um novo jogo?",
+    "newGameWarning": "O quadro, o histórico e as dicas serão reiniciados. Exporte o progresso antes se quiser guardá-lo. O código do workspace é arquivado, não apagado.",
+    "newGameConfirm": "Começar novo jogo",
+    "newGameDone": "Um novo jogo começou."
   },
   "errors": {
     "dockerUnavailable": "O Docker não está rodando. Inicie o Docker Desktop e tente de novo.",

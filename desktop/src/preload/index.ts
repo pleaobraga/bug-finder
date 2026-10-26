@@ -53,6 +53,7 @@ const api: BugDetectiveApi = {
   exportProgress: () => call('exportProgress'),
   inspectSave: () => call('inspectSave'),
   restoreProgress: (token) => call('restoreProgress', token),
+  newGame: () => call('newGame'),
 };
 
 contextBridge.exposeInMainWorld('bugDetective', api);

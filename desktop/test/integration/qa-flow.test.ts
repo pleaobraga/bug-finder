@@ -193,6 +193,28 @@ describe('QA with real Docker', () => {
     expect((await ws.git(['log', '--format=%s', 'stage-2'])).trim().split('\n')).toEqual(['SupportDesk release 1.2', 'SupportDesk release 1.1']);
   });
 
+  it('starting a ticket discards leftovers: changes, untracked files and extra commits', async () => {
+    const ws = await workspace();
+    await docker.execChecked(
+      runtime.names.container,
+      [
+        'sh',
+        '-c',
+        'echo "// leftover commit" >> server/src/app.ts && git commit -qam "leftover" && echo "// dirty" >> client/src/App.tsx && echo junk > junk.txt && mkdir -p tmpdir && echo x > tmpdir/x.txt',
+      ],
+      { user: 'node', workdir: '/workspaces/supportdesk' },
+    );
+    expect((await ws.git(['status', '--porcelain'])).trim()).not.toBe('');
+
+    await game.move(2, 'inProgress');
+    expect(await ws.currentBranch()).toBe('player/ticket-2');
+    expect((await ws.git(['status', '--porcelain'])).trim()).toBe('');
+    expect((await ws.git(['rev-parse', 'HEAD'])).trim()).toBe((await ws.git(['rev-parse', 'stage-2^{commit}'])).trim());
+    expect(game.snapshot().log.join('\n')).toMatch(/discarded \d+ changed file\(s\) and 1 commit\(s\)/);
+    // node_modules (ignored) survive, so the project still runs.
+    expect((await ws.installedDependencyKey()) ?? '').not.toBe('');
+  });
+
   it('exports progress, deletes the volume and restores it', async () => {
     const save = join(dir, 'progress.bdsave');
     await game.exportProgress(save);
@@ -222,7 +244,7 @@ describe('QA with real Docker', () => {
   });
 
   it('recovers QA interrupted by a closed app and removes the leftover container', async () => {
-    await game.move(2, 'inProgress');
+    expect(rules.findTicket(game.current, 2)!.status).toBe('inProgress');
     await game.move(2, 'inQa');
     await new Promise((resolve) => setTimeout(resolve, 4000));
     const running = (await docker.containersWithRole('qa')).filter((name) => name.startsWith(`${PREFIX}-qa-`));
@@ -238,5 +260,31 @@ describe('QA with real Docker', () => {
     expect(ticket.comments.at(-1)!.kind).toBe('interrupted');
     expect((await docker.containersWithRole('qa')).filter((name) => name.startsWith(`${PREFIX}-qa-`))).toEqual([]);
     await game.waitForQa().catch(() => {});
+  });
+
+  it('a new game on a used workspace archives the old branches and starts from the clean stage', async () => {
+    const ws = await workspace();
+    // Leftover work of the previous game on its current branch, as after quitting mid-ticket.
+    await docker.execChecked(runtime.names.container, ['sh', '-c', 'echo "// leftover" >> client/src/App.tsx'], {
+      user: 'node',
+      workdir: '/workspaces/supportdesk',
+    });
+    const oldBranches = (await ws.git(['branch', '--list', 'player/*', '--format=%(refname:short)'])).trim().split('\n').sort();
+    expect(oldBranches).toContain('player/ticket-1');
+
+    const fresh = createGame(await mkdtemp(join(dir, 'new-game-')));
+    await fresh.init();
+    await fresh.nextAssignment();
+
+    expect(await ws.currentBranch()).toBe('player/ticket-1');
+    expect((await ws.git(['status', '--porcelain'])).trim()).toBe('');
+    expect((await ws.git(['rev-parse', 'HEAD'])).trim()).toBe((await ws.git(['rev-parse', 'stage-1^{commit}'])).trim());
+    expect(await ws.gameId()).toBe(fresh.current.createdAt);
+    const archived = (await ws.git(['branch', '--list', 'archive/*', '--format=%(refname:short)'])).trim().split('\n');
+    for (const branch of oldBranches) {
+      expect(archived.some((name) => name.endsWith(`/${branch}`))).toBe(true);
+    }
+    expect(await ws.git(['stash', 'list'])).toContain('uncommitted work from a previous game');
+    expect(fresh.snapshot().log.join('\n')).toMatch(/Archived \d+ branch/);
   });
 });

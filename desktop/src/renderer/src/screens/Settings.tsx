@@ -14,6 +14,7 @@ export function Settings({ snapshot }: { snapshot: Snapshot }) {
   const { settings } = snapshot.state;
   const [timeout, setTimeoutValue] = useState(String(settings.qaTimeoutSeconds));
   const [pending, setPending] = useState<{ token: string; summary: SaveSummary } | null>(null);
+  const [confirmNewGame, setConfirmNewGame] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
   const run = async (id: string, action: () => Promise<void>) => {
@@ -135,6 +136,12 @@ export function Settings({ snapshot }: { snapshot: Snapshot }) {
             {t('settings.restore')}
           </Button>
         </div>
+        <div className="mt-6 border-t border-line pt-4">
+          <p className="text-sm text-muted">{t('settings.newGameHelp')}</p>
+          <Button className="mt-3" variant="danger" disabled={snapshot.busy !== null} onClick={() => setConfirmNewGame(true)} data-testid="new-game">
+            {t('settings.newGame')}
+          </Button>
+        </div>
         {snapshot.busy === 'restoring' && (
           <div className="mt-3">
             <LogView lines={snapshot.log} />
@@ -156,6 +163,27 @@ export function Settings({ snapshot }: { snapshot: Snapshot }) {
         </dl>
       </Card>
 
+      {confirmNewGame && (
+        <Modal title={t('settings.newGameTitle')} onClose={() => setConfirmNewGame(false)}>
+          <p className="rounded-lg bg-amber-100 p-3 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">{t('settings.newGameWarning')}</p>
+          <div className="mt-5 flex justify-end gap-2">
+            <Button onClick={() => setConfirmNewGame(false)}>{t('common.cancel')}</Button>
+            <Button
+              variant="danger"
+              data-testid="confirm-new-game"
+              onClick={() => {
+                setConfirmNewGame(false);
+                void run('newGame', async () => {
+                  await api.newGame();
+                  toast.info(t('settings.newGameDone'));
+                });
+              }}
+            >
+              {t('settings.newGameConfirm')}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {pending && (
         <Modal title={t('settings.restoreTitle')} onClose={() => setPending(null)}>
           <p className="text-sm">

@@ -235,7 +235,13 @@ export class Game {
       const fetched = await this.options.content.fetchStage(ticket);
       this.appendLog(`» Verified ${fetched.codeFiles.length} files and the stage package (SHA-256)`);
       await this.options.packages.save(ticket, fetched.packageZip);
+      // The volume outlives the saved game: work from another game is archived, never reused.
+      const archived = await this.options.runtime.claimWorkspace(this.state.createdAt);
+      if (archived > 0) {
+        this.appendLog(`» Archived ${archived} branch(es) from a previous game (archive/…)`);
+      }
       const commit = await this.options.runtime.importStage(ticket, fetched.codeFiles, fetched.entry.commitMessage);
+      await this.options.runtime.claimWorkspace(this.state.createdAt);
       this.appendLog(`» Imported as commit ${commit.slice(0, 12)}`);
       await this.options.runtime.checkoutPlayerBranch(ticket);
       this.appendLog(`» Checked out ${playerBranch(ticket)}`);
@@ -250,7 +256,30 @@ export class Game {
     if (to === 'inQa') {
       return this.submitToQa(ticket);
     }
+    if (to === 'inProgress') {
+      return this.startTicket(ticket);
+    }
     await this.commit(this.apply((state, ctx) => rules.playerMove(state, ticket, to, ctx)));
+  }
+
+  /**
+   * To Do → In Progress happens exactly once per ticket (cards never go back to To Do), so the
+   * player always starts from the clean stage: whatever is left in the workspace (from an earlier
+   * playthrough, an interrupted run or edits made before starting) is discarded, and the database
+   * is reseeded. Coming back from QA does not pass through here, so work in progress is kept.
+   */
+  private async startTicket(ticket: number): Promise<void> {
+    // Validate the move before touching anything.
+    this.apply((state, ctx) => rules.playerMove(state, ticket, 'inProgress', ctx));
+    await this.requireDocker();
+    await this.exclusive('starting', async () => {
+      const discarded = await this.options.runtime.resetToStage(ticket);
+      if (discarded.changes > 0 || discarded.commits > 0) {
+        this.appendLog(`» Workspace reset to stage ${ticket}: discarded ${discarded.changes} changed file(s) and ${discarded.commits} commit(s)`);
+      }
+      await this.options.runtime.resetDatabase().catch(() => {});
+      await this.commit(this.apply((state, ctx) => rules.playerMove(state, ticket, 'inProgress', ctx)));
+    });
   }
 
   /** Moving to In QA: checks the environment, moves the card and runs QA in the background. */
@@ -319,6 +348,22 @@ export class Game {
 
   async acceptReview(ticket: number): Promise<void> {
     await this.commit(this.apply((state, ctx) => rules.acceptReview(state, ticket, ctx)));
+  }
+
+  /**
+   * Starts over with a new game. The workspace's branches are archived on the next unlock (the
+   * repository belongs to the old game id), and downloaded packages are removed.
+   */
+  async newGame(): Promise<void> {
+    if (this.busy || this.qaRun) {
+      throw new GameError('busy');
+    }
+    const { language, theme, qaTimeoutSeconds } = this.state.settings;
+    const fresh = rules.createInitialState(this.ctx(), language);
+    await this.options.packages.clear();
+    this.titles = {};
+    this.hintsTotal = {};
+    await this.commit({ ...fresh, settings: { ...fresh.settings, theme, qaTimeoutSeconds } });
   }
 
   async markInboxRead(id: string): Promise<void> {
@@ -438,7 +483,7 @@ export class Game {
       this.pendingSaves.delete(token);
       const current = save.state.currentTicket;
       this.appendLog('» Recreating the workspace volume from the save');
-      await this.options.runtime.restoreWorkspace(save.bundle, current === null ? null : playerBranch(current));
+      await this.options.runtime.restoreWorkspace(save.bundle, current === null ? null : playerBranch(current), save.state.createdAt);
       await this.options.packages.clear();
       for (const [stage, zip] of save.packages) {
         await this.options.packages.save(stage, zip);

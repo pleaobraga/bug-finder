@@ -94,6 +94,19 @@ export class FakeRuntime implements GameRuntime {
     this.scenario.environmentReady = true;
   }
 
+  /** Records which game owns the fake workspace, like the real repository config. */
+  claimed: string | null = null;
+
+  async claimWorkspace(gameId: string) {
+    const archived = this.claimed !== null && this.claimed !== gameId ? this.stages.size : 0;
+    if (archived) {
+      this.stages.clear();
+      this.branch = null;
+    }
+    this.claimed = gameId;
+    return archived;
+  }
+
   async importStage(stage: number, files: ArchiveFile[]) {
     const commit = createHash('sha1').update(`stage-${stage}:${files.length}`).digest('hex');
     this.stages.set(stage, commit);
@@ -107,6 +120,15 @@ export class FakeRuntime implements GameRuntime {
         this.scenario.docker = 'notRunning';
       }, 500);
     }
+  }
+
+  /** Tickets whose workspace was reset to the stage, for tests. */
+  resets: number[] = [];
+
+  async resetToStage(stage: number) {
+    this.resets.push(stage);
+    this.branch = `player/ticket-${stage}`;
+    return { changes: 0, commits: 0 };
   }
 
   async currentBranch() {

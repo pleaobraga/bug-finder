@@ -53,11 +53,13 @@ if [ ! -d .git ]; then
   git config user.name "SupportDesk Developer"
   git config user.email "developer@supportdesk.invalid"
 fi
-if ! git rev-parse -q --verify "refs/tags/stage-$stage" >/dev/null; then
-  cd "$src"
-  export GIT_DIR=${WORKSPACE_DIR}/.git GIT_WORK_TREE="$src" GIT_INDEX_FILE="$src.index"
-  git add -A -f .
-  tree=$(git write-tree)
+# The snapshot's tree, computed in a temporary index (the player's index is never touched).
+cd "$src"
+tree=$(GIT_DIR=${WORKSPACE_DIR}/.git GIT_WORK_TREE="$src" GIT_INDEX_FILE="$src.index" sh -c 'git add -A -f . && git write-tree')
+cd ${WORKSPACE_DIR}
+# Reuse the existing stage tag only if it holds exactly this snapshot (a retry, or the same content).
+existing=$(git rev-parse -q --verify "refs/tags/stage-$stage^{tree}" || true)
+if [ "$existing" != "$tree" ]; then
   export GIT_AUTHOR_NAME="Bug Detective" GIT_AUTHOR_EMAIL="stages@bugdetective.invalid"
   export GIT_COMMITTER_NAME="Bug Detective" GIT_COMMITTER_EMAIL="stages@bugdetective.invalid"
   if parent=$(git rev-parse -q --verify refs/heads/bugdetective/stages); then
@@ -66,12 +68,54 @@ if ! git rev-parse -q --verify "refs/tags/stage-$stage" >/dev/null; then
     commit=$(git commit-tree "$tree" -m "$message")
   fi
   git update-ref refs/heads/bugdetective/stages "$commit"
-  git tag "stage-$stage" "$commit"
-  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-  cd ${WORKSPACE_DIR}
+  git tag -f "stage-$stage" "$commit" >/dev/null
 fi
 rm -rf "$src" "$src.index"
 git rev-parse "refs/tags/stage-$stage^{commit}"`,
+
+  /**
+   * Makes the repository belong to this game. Player branches and uncommitted work left by another
+   * game (an earlier playthrough on this computer, or a build without game ids) are archived, never
+   * deleted: work goes to a stash, branches are renamed to archive/<time>/player/ticket-N.
+   * Prints the number of archived branches.
+   */
+  claimForGame: `set -eu
+game="$1"; stamp="$2"
+cd ${WORKSPACE_DIR}
+if [ ! -d .git ]; then echo 0; exit 0; fi
+if [ "$(git config --get bugdetective.game || true)" = "$game" ]; then echo 0; exit 0; fi
+if git rev-parse -q --verify HEAD >/dev/null && [ -n "$(git status --porcelain)" ]; then
+  git stash push -q -u -m "Bug Detective: uncommitted work from a previous game ($stamp)"
+fi
+count=0
+for ref in $(git for-each-ref --format='%(refname:short)' refs/heads/player/); do
+  git branch -m "$ref" "archive/$stamp/$ref"
+  count=$((count + 1))
+done
+# Leave HEAD on the stage history, so the next checkout starts from a clean tree.
+if git rev-parse -q --verify refs/heads/bugdetective/stages >/dev/null; then
+  git checkout -q -f --detach bugdetective/stages
+fi
+git config bugdetective.game "$game"
+echo "$count"`,
+
+  /**
+   * Starting a ticket (To Do → In Progress, which happens once): player/ticket-N is forced to the
+   * clean stage commit. Uncommitted changes, untracked files and extra commits are discarded on
+   * purpose; ignored files (node_modules) stay. Prints "<changed files> <extra commits>".
+   */
+  resetToStage: `set -eu
+stage="$1"; branch="player/ticket-$stage"
+cd ${WORKSPACE_DIR}
+git rev-parse -q --verify "refs/tags/stage-$stage" >/dev/null
+changes=$(git status --porcelain | wc -l)
+commits=0
+if git rev-parse -q --verify "refs/heads/$branch" >/dev/null; then
+  commits=$(git rev-list --count "stage-$stage..$branch")
+fi
+git checkout -q -f -B "$branch" "stage-$stage"
+git clean -q -f -d
+echo "$changes $commits"`,
 
   /** Switches to player/ticket-N. Uncommitted work from the previous ticket is stashed, never lost. */
   checkoutPlayerBranch: `set -eu
@@ -290,6 +334,36 @@ export class Workspace {
     const tar = await writeTar(files);
     const { stdout } = await this.script('importStage', [String(stage), message], { input: tar, timeoutMs: 120_000 });
     return stdout.toString('utf8').trim().split('\n').at(-1)!;
+  }
+
+  /** Claims the repository for a game (see claimForGame). Returns the number of archived branches. */
+  async claimForGame(gameId: string, now = new Date()): Promise<number> {
+    if (!/^[0-9TZ:.-]{10,40}$/.test(gameId)) {
+      throw new Error(`Invalid game id: ${gameId}`);
+    }
+    const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+    const { stdout } = await this.script('claimForGame', [gameId, stamp], { timeoutMs: 60_000 });
+    return Number(stdout.toString('utf8').trim().split('\n').at(-1)) || 0;
+  }
+
+  /** Marks the repository as belonging to a game, without archiving anything (used after a restore). */
+  async setGameId(gameId: string): Promise<void> {
+    await this.git(['config', 'bugdetective.game', gameId]);
+  }
+
+  async gameId(): Promise<string | null> {
+    const result = await this.docker.exec(this.names.container, ['git', 'config', '--get', 'bugdetective.game'], {
+      user: 'node',
+      workdir: WORKSPACE_DIR,
+    });
+    return result.code === 0 ? result.stdout.toString('utf8').trim() : null;
+  }
+
+  /** Forces player/ticket-N to the clean stage commit (see resetToStage). */
+  async resetToStage(stage: number): Promise<{ changes: number; commits: number }> {
+    const { stdout } = await this.script('resetToStage', [String(stage)], { timeoutMs: 60_000 });
+    const [changes, commits] = stdout.toString('utf8').trim().split('\n').at(-1)!.split(/\s+/).map(Number);
+    return { changes: changes || 0, commits: commits || 0 };
   }
 
   async checkoutPlayerBranch(stage: number): Promise<void> {

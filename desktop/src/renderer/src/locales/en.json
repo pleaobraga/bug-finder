@@ -203,7 +203,13 @@
     "restored": "Progress restored.",
     "about": "About",
     "contentSource": "Stage source",
-    "versions": "Versions"
+    "versions": "Versions",
+    "newGame": "New game",
+    "newGameHelp": "Start over from the first ticket. Your current branches are kept in the workspace repository under archive/.",
+    "newGameTitle": "Start a new game?",
+    "newGameWarning": "Your board, history and hints will be reset. Export your progress first if you want to keep it. Code in the workspace is archived, not deleted.",
+    "newGameConfirm": "Start new game",
+    "newGameDone": "A new game has started."
   },
   "errors": {
     "dockerUnavailable": "Docker is not running. Start Docker Desktop and try again.",
